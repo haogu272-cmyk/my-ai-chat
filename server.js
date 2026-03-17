@@ -4,7 +4,7 @@ const PORT = 3000;
 
 // 从环境变量读取敏感信息（安全！）
 const APP_ID = process.env.APP_ID || 'f320465c37b9479e965735a4a44956ac';
-const DASHSCOPE_API_KEY = process.env.DASHSCOPE_API_KEY;
+const DASHSCOPE_API_KEY = 'sk-6e6286b1c442460e81e810ff337e9997';
 
 if (!DASHSCOPE_API_KEY) {
   console.error('❌ 错误：未设置 DASHSCOPE_API_KEY 环境变量！');
