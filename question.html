@@ -34,7 +34,25 @@
           body: JSON.stringify({ prompt: input })
         });
         const data = await res.json();
-        resultDiv.innerText = data.text || data.error || '未知错误';
+
+        // 获取原始响应文本
+        let aiResponse = data.text || data.error || '未知错误';
+
+        // 清理引用标记：过滤以 [1]:, [2]:, [^1]: 等开头的行
+        aiResponse = aiResponse
+          .split('\n')
+          .filter(line => {
+            const trimmed = line.trim();
+            // 跳过空行或纯引用行（支持 [1]: 或 [^1]: 格式）
+            return !(trimmed.startsWith('[') && (trimmed.includes(']:') || trimmed.match(/^\[\^?\d+\]\s*$/)));
+          })
+          .join('\n')
+          .trim();
+
+        // 可选：进一步清理行内残留的 [1], [^2] 等标记
+        aiResponse = aiResponse.replace(/\s*\[\^?\d+\]\s*/g, ' ');
+
+        resultDiv.innerText = aiResponse;
       } catch (err) {
         resultDiv.innerText = '❌ 网络错误，请确保后端正在运行';
       }
