@@ -1,19 +1,21 @@
 // api/chat.js
-import { NextResponse } from 'next/server';
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: '只允许 POST 请求' });
+  }
 
-const APP_ID = process.env.APP_ID || 'f320465c37b9479e965735a4a44956ac';
-const DASHSCOPE_API_KEY = process.env.DASHSCOPE_API_KEY;
+  const APP_ID = process.env.APP_ID || 'f320465c37b9479e965735a4a44956ac';
+  const DASHSCOPE_API_KEY = process.env.DASHSCOPE_API_KEY;
 
-if (!DASHSCOPE_API_KEY) {
-  console.error('❌ 错误：未设置 DASHSCOPE_API_KEY 环境变量！');
-}
+  if (!DASHSCOPE_API_KEY) {
+    console.error('❌ 错误：未设置 DASHSCOPE_API_KEY 环境变量！');
+    return res.status(500).json({ error: '服务器配置错误' });
+  }
 
-export async function POST(request) {
   try {
-    const { prompt } = await request.json();
-
+    const { prompt } = req.body;
     if (!prompt) {
-      return NextResponse.json({ error: '缺少 prompt 参数' }, { status: 400 });
+      return res.status(400).json({ error: '缺少 prompt 参数' });
     }
 
     const response = await fetch(
@@ -36,8 +38,6 @@ export async function POST(request) {
 
     if (response.ok) {
       let aiResponse = data.output?.text || 'AI 未返回有效内容';
-
-      // 清理引用标记 [1], [2]...
       aiResponse = aiResponse
         .split('\n')
         .filter(line => !line.trim().match(/^\[\d+\]/))
@@ -45,19 +45,15 @@ export async function POST(request) {
         .trim()
         .replace(/\s*\[\d+\]\s*/g, ' ');
 
-      return NextResponse.json({ text: aiResponse });
+      return res.status(200).json({ text: aiResponse });
     } else {
       console.error('阿里云 API 错误:', data);
-      return NextResponse.json(
-        { error: `AI 服务错误: ${data.message || '未知错误'}` },
-        { status: response.status }
-      );
+      return res.status(response.status).json({ 
+        error: `AI 服务错误: ${data.message || '未知错误'}`
+      });
     }
   } catch (error) {
     console.error('服务器内部错误:', error);
-    return NextResponse.json(
-      { error: '服务暂时不可用，请稍后再试' },
-      { status: 500 }
-    );
+    return res.status(500).json({ error: '服务暂时不可用，请稍后再试' });
   }
 }
